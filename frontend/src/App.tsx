@@ -1,5 +1,5 @@
 import React from 'react';
-import { BrowserRouter, Route, Switch } from 'react-router-dom'
+import { BrowserRouter, Redirect, Route, Switch } from 'react-router-dom'
 import Lobby from './pages/lobby/Lobby';
 import Room from './pages/room/Room';
 
@@ -14,6 +14,7 @@ function App() {
       <Switch>
         <Route exact path='/' component={Lobby}/>
         <Route exact path='/room/:id/:name' component={Room}/>
+        <Redirect to='/'/>
       </Switch>
     </BrowserRouter>
   );
