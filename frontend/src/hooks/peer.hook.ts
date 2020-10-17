@@ -12,9 +12,10 @@ export interface PeerItem {
   remoteStream: MediaStream
 }
 
-function usePeer(): [React.RefObject<HTMLVideoElement>, PeerItem[]] {
+function usePeer(): [React.RefObject<HTMLVideoElement>, PeerItem[], MediaStream | null] {
   const configuration = {'iceServers': [{'urls': 'stun:stun.l.google.com:19302'}]}
   const [peerItems, setPeerItems] = useState<PeerItem[]>([])
+  const [stream, setStream] = useState<MediaStream | null>(null)
 
   const video = useRef<HTMLVideoElement>(null)
 
@@ -23,6 +24,8 @@ function usePeer(): [React.RefObject<HTMLVideoElement>, PeerItem[]] {
     socket.on('all users', (users: string[]) => {
       console.log(users)
       navigator.mediaDevices.getUserMedia({audio: true}).then(stream => {
+        setStream(stream)
+
         if (video) {
           video.current!.srcObject = stream
         }
@@ -126,7 +129,7 @@ function usePeer(): [React.RefObject<HTMLVideoElement>, PeerItem[]] {
     return {peer, remoteStream}
   }
 
-  return [video, peerItems]
+  return [video, peerItems, stream]
 }
 
 export default usePeer
