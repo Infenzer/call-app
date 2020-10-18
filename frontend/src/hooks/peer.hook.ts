@@ -23,7 +23,7 @@ function usePeer(): [React.RefObject<HTMLVideoElement>, PeerItem[], MediaStream 
     let peers: PeerItem[] = []  
     socket.on('all users', (users: string[]) => {
       console.log(users)
-      navigator.mediaDevices.getUserMedia({audio: true}).then(stream => {
+      navigator.mediaDevices.getUserMedia({audio: true, video: true}).then(stream => {
         setStream(stream)
 
         if (video) {
@@ -50,6 +50,8 @@ function usePeer(): [React.RefObject<HTMLVideoElement>, PeerItem[], MediaStream 
         })
 
         setPeerItems(peers)
+      }).catch(e => {
+        console.log(e)
       })
     })
 
@@ -76,7 +78,7 @@ function usePeer(): [React.RefObject<HTMLVideoElement>, PeerItem[], MediaStream 
     })
 
     socket.on('candidate', (candidate: RTCIceCandidate) => {
-      peer.addIceCandidate(candidate)
+      peer.addIceCandidate(new RTCIceCandidate({sdpMLineIndex: candidate.sdpMLineIndex, candidate: candidate.candidate}))
     })
 
     socket.on('answer', (answer: RTCSessionDescriptionInit) => {
@@ -115,7 +117,7 @@ function usePeer(): [React.RefObject<HTMLVideoElement>, PeerItem[], MediaStream 
     })
 
     socket.on('candidate', (candidate: RTCIceCandidate) => {
-      peer.addIceCandidate(candidate)
+      peer.addIceCandidate(new RTCIceCandidate({sdpMLineIndex: candidate.sdpMLineIndex, candidate: candidate.candidate}))
     })
 
     peer.setRemoteDescription(new RTCSessionDescription(offer))

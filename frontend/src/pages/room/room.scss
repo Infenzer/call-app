@@ -1,39 +1,44 @@
 .room {
+  height: 100vh;
   display: flex;
+  flex-direction: column;
+  justify-content: space-between;
 
-  .video {
-    position: relative;
+  .user-interface {
+    width: 100vw;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-bottom: 2em;
 
-    .audio:hover .volume-input {
-      opacity: 1;
-    }
-    
-    .audio {
-      position: absolute;
-      left: 5%;
-      bottom: 5%;
-      width: 26px;
+    .interface-btn {
       display: flex;
-      flex-direction: column;
       align-items: center;
-      font-size: 1.2em;
+      justify-content: center;
+      width: 2.5em;
+      height: 2.5em;
+      background-color: black;
+      border-radius: 50%;
+      color: white;
+      font-size: 1.5em;
+      cursor: pointer;
+      margin-right: 1em;
 
-      .mic-icon {
-        margin-top: .25em;
-      }
-
-      .volume-input {
-        height: 100px;
-        opacity: 0;
-
-        #volume {
-          position: absolute;
-          left: -40px;
-          top: 40px;
-          width: 100px;
-          transform: rotate(-90deg);
-        }
+      .disable {
+        color: red;
       }
     }
+
+    .phone {
+      background-color: red;
+
+      i {
+        transform: rotate(225deg);
+      }
+    }
+  }
+
+  .users-video-wrapper {
+    display: flex;
   }
 }

@@ -1,0 +1,57 @@
+.video {
+  position: relative;
+  border: 1px solid black;
+  margin: 1em;
+
+  .audio:hover .volume-input {
+    opacity: 1;
+  }
+
+  .disable-mic {
+    position: absolute;
+    right: 5%;
+    top: 5%;
+    
+    i {
+      color: red;
+    }
+  }
+
+  .disable-camera {
+    position: absolute;
+    right: 5%;
+    top: 15%;
+    
+    i {
+      color: red;
+    }
+  }
+  
+  .audio {
+    position: absolute;
+    left: 5%;
+    bottom: 5%;
+    width: 26px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    font-size: 1.2em;
+
+    .volume-icon {
+      cursor: pointer;
+    }
+
+    .volume-input {
+      height: 100px;
+      opacity: 0;
+
+      #volume {
+        position: absolute;
+        left: -40px;
+        top: 40px;
+        width: 100px;
+        transform: rotate(-90deg);
+      }
+    }
+  }
+}

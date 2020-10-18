@@ -1,8 +1,11 @@
 import React, { useEffect, useRef, useState } from 'react'
 import { PeerItem } from '../../hooks/peer.hook'
+import './video.scss'
 
 interface VideoProps {
   peerItem: PeerItem 
+  disabledMic: boolean
+  disabledCamera: boolean
 }
 
 let prevVolume = 0
@@ -11,7 +14,6 @@ const Video: React.FC<VideoProps> = (props) => {
   const video = useRef<HTMLVideoElement>(null)
 
   const [volume, setVolume] = useState(0)
-  const [mute, setMute] = useState(false)
 
   useEffect(() => {
     if (video && video.current) {
@@ -33,10 +35,6 @@ const Video: React.FC<VideoProps> = (props) => {
       prevVolume = volume
       setVolume(0)
     }
-  }
-
-  function toggleMute() {
-    setMute(prevState => !prevState)
   }
 
   return (
@@ -64,15 +62,17 @@ const Video: React.FC<VideoProps> = (props) => {
               <i className="fas fa-volume-mute"></i>
             )}
           </div>
-          <div className="mic-icon" onClick={() => toggleMute()}>
-            {mute && (
-              <i className="fas fa-microphone-slash"></i>
-            )}
-            {!mute && (
-              <i className="fas fa-microphone"></i>
-            )}
-          </div>
         </div>
+        {props.disabledMic && (
+          <div className="disable-mic">
+            <i className="fas fa-microphone-slash"></i>
+          </div>
+        )}
+        {props.disabledCamera && (
+          <div className="disable-camera">
+             <i className="fas fa-video-slash"></i>
+          </div>
+        )}
     </div>
   )
 }
