@@ -23,7 +23,7 @@ function usePeer(): [React.RefObject<HTMLVideoElement>, PeerItem[], MediaStream 
     let peers: PeerItem[] = []  
     socket.on('all users', (users: string[]) => {
       console.log(users)
-      navigator.mediaDevices.getUserMedia({audio: true, video: true}).then(stream => {
+      navigator.mediaDevices.getUserMedia({audio: true}).then(stream => {
         setStream(stream)
 
         if (video) {

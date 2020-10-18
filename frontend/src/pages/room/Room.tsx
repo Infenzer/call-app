@@ -8,9 +8,11 @@ import './room.scss'
 
 interface RoomProps extends RouteChildrenProps<RoomParam>{} 
 
-interface MicState {
-  userId: string,
-  active: boolean
+interface User {
+  name: string
+  id: string
+  micActive: boolean
+  cameraActive: boolean
 }
 
 const Room: React.FC<RoomProps> = (props) => {
@@ -19,27 +21,16 @@ const Room: React.FC<RoomProps> = (props) => {
   const [activeMic, setActiveMic] = useState(true)
   const [activeCamera, setActiveCamera] = useState(false)
   const [youVideo, peerItems, stream] = usePeer()
-  const [disableMicUsers, setDisableMicUsers] = useState<string[]>([])
-  const [disabeCameraUsers, setDisableCameraUsers] = useState<string[]>([])
+  const [usersMedia, setUsersMedia] = useState<User[]>([])
 
   useEffect(() => {
     socket.emit('join room', {roomId, name})
 
-    socket.on('camera state', (cameraState: MicState) => {
-      if (!cameraState.active) {
-        setDisableCameraUsers(prevState => [...prevState, cameraState.userId])
-      } else {
-        setDisableCameraUsers(prevState => prevState.filter(userId => userId !== cameraState.userId))
-      }
+    socket.on('users media', (usersMedia: User[]) => {
+      console.log(usersMedia)
+      setUsersMedia(usersMedia)
     })
 
-    socket.on('mic state', (micState: MicState) => {
-      if (!micState.active) {
-        setDisableMicUsers(prevState => [...prevState, micState.userId])
-      } else {
-        setDisableMicUsers(prevState => prevState.filter(userId => userId !== micState.userId))
-      }
-    })
     console.log(roomId, name)
   }, [])
 
@@ -47,7 +38,7 @@ const Room: React.FC<RoomProps> = (props) => {
     if (stream) {
       stream.getVideoTracks().forEach(track => {
         track.enabled = activeCamera
-        socket.emit('camera state', {userId: socket.id, active: activeCamera})
+        //socket.emit('user media', {id: socket.id, activeMic, activeCamera})
       })
     }
   }, [stream])
@@ -57,8 +48,8 @@ const Room: React.FC<RoomProps> = (props) => {
       setActiveMic(prevState => !prevState)
       stream.getAudioTracks().forEach(track => {
         track.enabled = !activeMic
-        socket.emit('mic state', {userId: socket.id, active: !activeMic})
       })
+      socket.emit('user media', {id: socket.id, activeMic: !activeMic, activeCamera})
     }
   }
 
@@ -67,13 +58,25 @@ const Room: React.FC<RoomProps> = (props) => {
       setActiveCamera(prevState => !prevState)
       stream.getVideoTracks().forEach(track => {
         track.enabled = !activeCamera
-        socket.emit('camera state', {userId: socket.id, active: !activeCamera})
       })
+      socket.emit('user media', {id: socket.id, activeMic, activeCamera: !activeCamera})
     }
   }
 
   function hungUp() {
 
+  }
+
+  function getUserMedia(type: 'mic' | 'camera', userId: string) {
+    const user = usersMedia.find(user => user.id === userId)
+
+    if (type === 'mic' && user) {
+      return user.micActive
+    } else if (type === 'camera' && user) {
+      return user.cameraActive
+    }
+
+    return false
   }
 
   return (
@@ -84,8 +87,8 @@ const Room: React.FC<RoomProps> = (props) => {
         </div>
         {peerItems.map(item => <Video key={item.id} 
           peerItem={item}
-          disabledCamera={disabeCameraUsers.includes(item.id)}
-          disabledMic={disableMicUsers.includes(item.id)} 
+          disabledCamera={!getUserMedia('camera', item.id)}
+          disabledMic={!getUserMedia('mic', item.id)} 
         />)}
       </div>
       <div className="user-interface">
