@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import { RouteChildrenProps } from 'react-router-dom'
 import { RoomParam } from '../../App'
 import Video from '../../components/video/Video'
@@ -8,7 +8,7 @@ import './room.scss'
 
 interface RoomProps extends RouteChildrenProps<RoomParam>{} 
 
-interface User {
+interface UserMedia {
   name: string
   id: string
   micActive: boolean
@@ -28,28 +28,42 @@ const Room: React.FC<RoomProps> = (props) => {
   const roomId = props.match?.params.id
   const [activeMic, setActiveMic] = useState(true)
   const [activeCamera, setActiveCamera] = useState(false)
-  const [youVideo, peerItems, stream] = usePeer()
-  const [usersMedia, setUsersMedia] = useState<User[]>([])
+  const [usersMedia, setUsersMedia] = useState<UserMedia[]>([])
+  const [stream, setStream] = useState<MediaStream | null>(null)
+  const [initConnect, setInitConnect] = useState(false)
+  const [
+    peerItems,
+    connect,
+    disconnect, 
+    callUsers
+  ] = usePeer()
+  
+  const youVideo = useRef<HTMLVideoElement>(null)
 
   useEffect(() => {
     socket.emit('join room', {roomId, name})
 
-    socket.on('users media', (usersMedia: User[]) => {
-      console.log(usersMedia)
+    socket.on('users media', (usersMedia: UserMedia[]) => {
+      console.log(usersMedia, socket.id)
       setUsersMedia(usersMedia)
+    })
+
+    navigator.mediaDevices.getUserMedia(constraints).then(stream => {
+      setStream(stream)
+    }).catch(e => {
+      console.log(e)
     })
 
     console.log(roomId, name)
   }, [])
-
+  
   useEffect(() => {
-    if (stream) {
-      stream.getVideoTracks().forEach(track => {
-        track.enabled = activeCamera
-        //socket.emit('user media', {id: socket.id, activeMic, activeCamera})
-      })
+    if (stream && callUsers?.length === 0) {
+      console.log('hell')
+      setInitConnect(true)
+      connect(stream)
     }
-  }, [stream])
+  }, [stream, callUsers])
 
   function toggleMic() {
     if (stream) {
@@ -71,8 +85,32 @@ const Room: React.FC<RoomProps> = (props) => {
     }
   }
 
-  function hungUp() {
+  function screenSharing() {
+    // @ts-ignore
+    navigator.mediaDevices.getDisplayMedia({video: true, audio: true}).then(displayStreem => {
+      if (youVideo.current) {
+        youVideo.current.srcObject = displayStreem
+      }
 
+      const videoTack = displayStreem.getVideoTracks()[0]
+      peerItems.forEach(item => {
+        const senderVideo = item.peer.getSenders()[1]
+        senderVideo.replaceTrack(videoTack)
+      })
+    })
+    
+  }
+
+  function call() {
+    if (stream) {
+      connect(stream)
+    }
+  }
+
+  function hungUp() {
+    // peerItems[0].peer.close()
+    // console.log(peerItems[0])
+    // screenSharing()
   }
 
   function getUserMedia(type: 'mic' | 'camera', userId: string) {
@@ -87,6 +125,7 @@ const Room: React.FC<RoomProps> = (props) => {
     return false
   }
 
+  const phoneClass = peerItems.length ? 'hung-up' : 'call'
   return (
     <div className='room'>
       <div className="users-video-wrapper">
@@ -116,9 +155,11 @@ const Room: React.FC<RoomProps> = (props) => {
             <i className="fas fa-video-slash disable"></i>
           )}
         </div>
-        <div className="interface-btn phone" onClick={() => hungUp()}>
-          <i className="fas fa-phone"></i>
-        </div>
+        {(callUsers !== null && callUsers.length > 0 && usersMedia.length > 1) && (
+          <div className={'interface-btn ' + phoneClass} onClick={() => peerItems.length ? hungUp() : call()}>
+            <i className="fas fa-phone"></i>
+          </div>
+        )}
       </div>
     </div>
   )

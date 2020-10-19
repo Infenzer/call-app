@@ -12,47 +12,17 @@ export interface PeerItem {
   remoteStream: MediaStream
 }
 
-function usePeer(): [React.RefObject<HTMLVideoElement>, PeerItem[], MediaStream | null] {
+let peers: PeerItem[] = [] 
+
+function usePeer(): [PeerItem[], (mediaStream: MediaStream) => void, () => void, string[] | null] {
   const configuration = {'iceServers': [{'urls': 'stun:stun.l.google.com:19302'}]}
   const [peerItems, setPeerItems] = useState<PeerItem[]>([])
-  const [stream, setStream] = useState<MediaStream | null>(null)
+  const [callUsers, setCallUsers] = useState<string[] | null>(null)
 
-  const video = useRef<HTMLVideoElement>(null)
-
-  useEffect(() => {
-    let peers: PeerItem[] = []  
+  useEffect(() => { 
     socket.on('all users', (users: string[]) => {
-      console.log(users)
-      navigator.mediaDevices.getUserMedia({audio: true}).then(stream => {
-        setStream(stream)
-
-        if (video) {
-          video.current!.srcObject = stream
-        }
-        
-        users.forEach(user => {
-          const peerItem = createPeerItem(user, stream)
-          peers.push({
-            id: user,
-            ...peerItem
-          })
-        })
-
-        socket.on('offer', (message: OfferSocket) => {
-          const peerItem = addPeerItem(message.from, message.offer, stream)
-          const item = {
-            id: message.from,
-            ...peerItem
-          }
-          peers.push(item)
-    
-          setPeerItems([...peers])
-        })
-
-        setPeerItems(peers)
-      }).catch(e => {
-        console.log(e)
-      })
+      console.log(users, socket.id)
+      setCallUsers(users)
     })
 
     socket.on('user disconnect', (userId: string) => {
@@ -78,7 +48,10 @@ function usePeer(): [React.RefObject<HTMLVideoElement>, PeerItem[], MediaStream 
     })
 
     socket.on('candidate', (candidate: RTCIceCandidate) => {
-      peer.addIceCandidate(new RTCIceCandidate({sdpMLineIndex: candidate.sdpMLineIndex, candidate: candidate.candidate}))
+      peer.addIceCandidate(new RTCIceCandidate({
+        sdpMLineIndex: candidate.sdpMLineIndex, 
+        candidate: candidate.candidate
+      }))
     })
 
     socket.on('answer', (answer: RTCSessionDescriptionInit) => {
@@ -131,7 +104,36 @@ function usePeer(): [React.RefObject<HTMLVideoElement>, PeerItem[], MediaStream 
     return {peer, remoteStream}
   }
 
-  return [video, peerItems, stream]
+  function connect(stream: MediaStream) {
+    callUsers?.forEach(user => {
+      const peerItem = createPeerItem(user, stream)
+      peers.push({
+        id: user,
+        ...peerItem
+      })
+    })
+
+    socket.on('offer', (message: OfferSocket) => {
+      const peerItem = addPeerItem(message.from, message.offer, stream)
+      const item = {
+        id: message.from,
+        ...peerItem
+      }
+      peers.push(item)
+
+      setPeerItems([...peers])
+    })
+
+    setPeerItems(peers)
+  }
+
+  function disconnect() {
+    peerItems.forEach(item => {
+      item.peer.close()
+    })
+  }
+
+  return [peerItems, connect, disconnect, callUsers]
 }
 
 export default usePeer
