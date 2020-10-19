@@ -23,13 +23,22 @@
       font-size: 1.5em;
       cursor: pointer;
       margin-right: 1em;
+      transition: .4s;
 
       .disable {
         color: red;
       }
     }
 
-    .phone {
+    .call {
+      background-color: #00FF7F;
+
+      i {
+        transform: rotate(90deg);
+      }
+    }
+
+    .hung-up {
       background-color: red;
 
       i {

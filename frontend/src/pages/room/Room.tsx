@@ -15,9 +15,17 @@ interface User {
   cameraActive: boolean
 }
 
+const url = new URL(document.location.href)
+const name = url.searchParams.get('name')
+const videoCall = url.searchParams.get('video')
+
+const constraints: MediaStreamConstraints = {
+  audio: true,
+  video: videoCall === 'true' ? true : false
+}
+
 const Room: React.FC<RoomProps> = (props) => {
   const roomId = props.match?.params.id
-  const name = props.match?.params.name
   const [activeMic, setActiveMic] = useState(true)
   const [activeCamera, setActiveCamera] = useState(false)
   const [youVideo, peerItems, stream] = usePeer()

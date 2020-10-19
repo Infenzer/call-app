@@ -5,7 +5,6 @@ import Room from './pages/room/Room';
 
 export interface RoomParam {
   id: string
-  name: string
 }
 
 function App() {
@@ -13,7 +12,7 @@ function App() {
     <BrowserRouter>
       <Switch>
         <Route exact path='/' component={Lobby}/>
-        <Route exact path='/room/:id/:name' component={Room}/>
+        <Route exact path='/room/:id' component={Room}/>
         <Redirect to='/'/>
       </Switch>
     </BrowserRouter>
