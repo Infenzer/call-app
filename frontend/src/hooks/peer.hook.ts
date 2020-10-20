@@ -92,7 +92,7 @@ function usePeer(): [PeerItem[], (mediaStream: MediaStream) => void, () => void,
     socket.on('candidate', (candidate: RTCIceCandidate) => {
       peer.addIceCandidate(new RTCIceCandidate({sdpMLineIndex: candidate.sdpMLineIndex, candidate: candidate.candidate}))
     })
-
+    
     peer.setRemoteDescription(new RTCSessionDescription(offer))
     peer.createAnswer().then(answer => {
       peer.setLocalDescription(answer)
@@ -131,6 +131,8 @@ function usePeer(): [PeerItem[], (mediaStream: MediaStream) => void, () => void,
     peerItems.forEach(item => {
       item.peer.close()
     })
+    socket.disconnect()
+    setPeerItems([])
   }
 
   return [peerItems, connect, disconnect, callUsers]

@@ -27,7 +27,7 @@ const constraints: MediaStreamConstraints = {
 const Room: React.FC<RoomProps> = (props) => {
   const roomId = props.match?.params.id
   const [activeMic, setActiveMic] = useState(true)
-  const [activeCamera, setActiveCamera] = useState(false)
+  const [activeCamera, setActiveCamera] = useState(videoCall === 'true' ? true : false)
   const [usersMedia, setUsersMedia] = useState<UserMedia[]>([])
   const [stream, setStream] = useState<MediaStream | null>(null)
   const [initConnect, setInitConnect] = useState(false)
@@ -37,7 +37,7 @@ const Room: React.FC<RoomProps> = (props) => {
     disconnect, 
     callUsers
   ] = usePeer()
-  
+
   const youVideo = useRef<HTMLVideoElement>(null)
 
   useEffect(() => {
@@ -50,6 +50,9 @@ const Room: React.FC<RoomProps> = (props) => {
 
     navigator.mediaDevices.getUserMedia(constraints).then(stream => {
       setStream(stream)
+      if (youVideo.current) {
+        youVideo.current.srcObject = stream
+      }
     }).catch(e => {
       console.log(e)
     })
@@ -108,9 +111,7 @@ const Room: React.FC<RoomProps> = (props) => {
   }
 
   function hungUp() {
-    // peerItems[0].peer.close()
-    // console.log(peerItems[0])
-    // screenSharing()
+    disconnect()
   }
 
   function getUserMedia(type: 'mic' | 'camera', userId: string) {
@@ -126,11 +127,20 @@ const Room: React.FC<RoomProps> = (props) => {
   }
 
   const phoneClass = peerItems.length ? 'hung-up' : 'call'
+  const usersClass = () => {
+    if (peerItems.length === 0) {
+      return 'one-in-room'
+    } else if (peerItems.length <= 3) {
+      return 'grid four-users'
+    } else {
+      return 'grid nine-users'
+    }
+  }
   return (
     <div className='room'>
-      <div className="users-video-wrapper">
-        <div className="video">
-          <video width={250} height={250} autoPlay ref={youVideo} muted></video>
+      <div className={"video-wrapper " + usersClass()}>
+        <div className="user-video">
+          <video width={peerItems.length ? '100%' : ''} autoPlay ref={youVideo} muted></video>
         </div>
         {peerItems.map(item => <Video key={item.id} 
           peerItem={item}
@@ -138,6 +148,7 @@ const Room: React.FC<RoomProps> = (props) => {
           disabledMic={!getUserMedia('mic', item.id)} 
         />)}
       </div>
+
       <div className="user-interface">
         <div className="interface-btn mic" onClick={() => toggleMic()}>
           {activeMic && (

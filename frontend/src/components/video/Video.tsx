@@ -39,7 +39,7 @@ const Video: React.FC<VideoProps> = (props) => {
 
   return (
     <div className="video">
-      <video width={250} height={250} muted={volume === 0} autoPlay ref={video}></video>
+      <video muted={volume === 0} autoPlay ref={video}></video>
       <div className="audio">
           <div className="volume-input">
             <input type="range" 

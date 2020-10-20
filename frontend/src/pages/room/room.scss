@@ -3,13 +3,54 @@
   display: flex;
   flex-direction: column;
   justify-content: space-between;
+  background-image: url('../../assets/images/bg.jpg');
+  background-repeat: no-repeat;
+  background-size: cover;
+  overflow: hidden;
+
+  .four-users {
+    grid-template-rows: repeat(2, 1fr);
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .nine-users {
+    grid-template-rows: repeat(3, 28%);
+    grid-template-columns: repeat(3, 1fr);
+  }
+
+  .one-in-room {
+    height: 100%;
+  }
+
+  .grid {
+    height: 80vh;
+    display: grid;
+    gap: 2em;
+  }
+
+  .video-wrapper {
+    margin: 2% 5% 0;
+
+    .user-video {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      border: 1px solid black;
+      width: 100%;
+      height: 100%;
+
+      video {
+        height: 100%;
+      }
+    }
+  }
 
   .user-interface {
     width: 100vw;
     display: flex;
     justify-content: center;
     align-items: center;
-    margin-bottom: 2em;
+    margin: 2em 0;
 
     .interface-btn {
       display: flex;
@@ -45,9 +86,5 @@
         transform: rotate(225deg);
       }
     }
-  }
-
-  .users-video-wrapper {
-    display: flex;
   }
 }
