@@ -62,7 +62,6 @@ const Room: React.FC<RoomProps> = (props) => {
   
   useEffect(() => {
     if (stream && callUsers?.length === 0) {
-      console.log('hell')
       setInitConnect(true)
       connect(stream)
     }
@@ -131,16 +130,17 @@ const Room: React.FC<RoomProps> = (props) => {
     if (peerItems.length === 0) {
       return 'one-in-room'
     } else if (peerItems.length <= 3) {
-      return 'grid four-users'
+      return 'four-users'
     } else {
-      return 'grid nine-users'
+      return 'nine-users'
     }
   }
+
   return (
     <div className='room'>
       <div className={"video-wrapper " + usersClass()}>
-        <div className="user-video">
-          <video width={peerItems.length ? '100%' : ''} autoPlay ref={youVideo} muted></video>
+        <div className="user-video video">
+          <video autoPlay ref={youVideo} muted></video>
         </div>
         {peerItems.map(item => <Video key={item.id} 
           peerItem={item}

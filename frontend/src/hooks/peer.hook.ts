@@ -6,6 +6,12 @@ interface OfferSocket {
   offer: RTCSessionDescriptionInit
 }
 
+interface AnswerSocket {
+  answer: RTCSessionDescriptionInit,
+  from: string,
+  to: string
+}
+
 export interface PeerItem {
   id: string
   peer: RTCPeerConnection
@@ -47,16 +53,12 @@ function usePeer(): [PeerItem[], (mediaStream: MediaStream) => void, () => void,
       }
     })
 
-    socket.on('candidate', (candidate: RTCIceCandidate) => {
-      peer.addIceCandidate(new RTCIceCandidate({
-        sdpMLineIndex: candidate.sdpMLineIndex, 
-        candidate: candidate.candidate
-      }))
-    })
-
-    socket.on('answer', (answer: RTCSessionDescriptionInit) => {
-      peer.setRemoteDescription(new RTCSessionDescription(answer))
-    })
+    // socket.on('candidate', (candidate: RTCIceCandidate) => {
+    //   peer.addIceCandidate(new RTCIceCandidate({
+    //     sdpMLineIndex: candidate.sdpMLineIndex, 
+    //     candidate: candidate.candidate
+    //   }))
+    // })
 
     stream.getTracks().forEach(track => {
       peer.addTrack(track, stream)
@@ -89,9 +91,12 @@ function usePeer(): [PeerItem[], (mediaStream: MediaStream) => void, () => void,
       }
     })
 
-    socket.on('candidate', (candidate: RTCIceCandidate) => {
-      peer.addIceCandidate(new RTCIceCandidate({sdpMLineIndex: candidate.sdpMLineIndex, candidate: candidate.candidate}))
-    })
+    // socket.on('candidate', (candidate: RTCIceCandidate) => {
+    //   peer.addIceCandidate(new RTCIceCandidate({
+    //     sdpMLineIndex: candidate.sdpMLineIndex,
+    //     candidate: candidate.candidate
+    //   }))
+    // })
     
     peer.setRemoteDescription(new RTCSessionDescription(offer))
     peer.createAnswer().then(answer => {
@@ -125,6 +130,23 @@ function usePeer(): [PeerItem[], (mediaStream: MediaStream) => void, () => void,
     })
 
     setPeerItems(peers)
+
+    socket.on('answer', (message: AnswerSocket) => {
+      const peer = peers.find(peer => peer.id === message.from)?.peer
+      
+      if (peer) {
+        peer.setRemoteDescription(new RTCSessionDescription(message.answer))
+      }
+    })
+
+    socket.on('candidate', (candidate: RTCIceCandidate) => {
+      peers.forEach(item => {
+        item.peer.addIceCandidate(new RTCIceCandidate({
+          sdpMLineIndex: candidate.sdpMLineIndex,
+          candidate: candidate.candidate
+        }))
+      })
+    })
   }
 
   function disconnect() {
