@@ -20,7 +20,7 @@ export interface PeerItem {
 
 let peers: PeerItem[] = [] 
 
-function usePeer(): [PeerItem[], (mediaStream: MediaStream) => void, () => void, string[] | null] {
+function usePeer(): [PeerItem[], (mediaStream: MediaStream, users?: string[]) => void, () => void, string[] | null] {
   const configuration = {'iceServers': [{'urls': 'stun:stun.l.google.com:19302'}]}
   const [peerItems, setPeerItems] = useState<PeerItem[]>([])
   const [callUsers, setCallUsers] = useState<string[] | null>(null)
@@ -53,13 +53,6 @@ function usePeer(): [PeerItem[], (mediaStream: MediaStream) => void, () => void,
       }
     })
 
-    // socket.on('candidate', (candidate: RTCIceCandidate) => {
-    //   peer.addIceCandidate(new RTCIceCandidate({
-    //     sdpMLineIndex: candidate.sdpMLineIndex, 
-    //     candidate: candidate.candidate
-    //   }))
-    // })
-
     stream.getTracks().forEach(track => {
       peer.addTrack(track, stream)
     })
@@ -90,13 +83,6 @@ function usePeer(): [PeerItem[], (mediaStream: MediaStream) => void, () => void,
         socket.emit('candidate', {to, candidate: event.candidate})
       }
     })
-
-    // socket.on('candidate', (candidate: RTCIceCandidate) => {
-    //   peer.addIceCandidate(new RTCIceCandidate({
-    //     sdpMLineIndex: candidate.sdpMLineIndex,
-    //     candidate: candidate.candidate
-    //   }))
-    // })
     
     peer.setRemoteDescription(new RTCSessionDescription(offer))
     peer.createAnswer().then(answer => {
@@ -109,14 +95,17 @@ function usePeer(): [PeerItem[], (mediaStream: MediaStream) => void, () => void,
     return {peer, remoteStream}
   }
 
-  function connect(stream: MediaStream) {
-    callUsers?.forEach(user => {
+  function connect(stream: MediaStream, users?: string[]) {
+    const userList = users ? users : callUsers
+    userList?.forEach(user => {
       const peerItem = createPeerItem(user, stream)
       peers.push({
         id: user,
         ...peerItem
       })
     })
+
+    setPeerItems(peers)
 
     socket.on('offer', (message: OfferSocket) => {
       const peerItem = addPeerItem(message.from, message.offer, stream)
@@ -128,8 +117,6 @@ function usePeer(): [PeerItem[], (mediaStream: MediaStream) => void, () => void,
 
       setPeerItems([...peers])
     })
-
-    setPeerItems(peers)
 
     socket.on('answer', (message: AnswerSocket) => {
       const peer = peers.find(peer => peer.id === message.from)?.peer

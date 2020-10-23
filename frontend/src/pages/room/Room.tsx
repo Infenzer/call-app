@@ -8,11 +8,12 @@ import './room.scss'
 
 interface RoomProps extends RouteChildrenProps<RoomParam>{} 
 
-interface UserMedia {
+interface UserData {
   name: string
   id: string
   micActive: boolean
   cameraActive: boolean
+  owner: boolean
 }
 
 const url = new URL(document.location.href)
@@ -28,7 +29,7 @@ const Room: React.FC<RoomProps> = (props) => {
   const roomId = props.match?.params.id
   const [activeMic, setActiveMic] = useState(true)
   const [activeCamera, setActiveCamera] = useState(videoCall === 'true' ? true : false)
-  const [usersMedia, setUsersMedia] = useState<UserMedia[]>([])
+  const [usersMedia, setUsersMedia] = useState<UserData[]>([])
   const [stream, setStream] = useState<MediaStream | null>(null)
   const [initConnect, setInitConnect] = useState(false)
   const [
@@ -41,14 +42,18 @@ const Room: React.FC<RoomProps> = (props) => {
   const youVideo = useRef<HTMLVideoElement>(null)
 
   useEffect(() => {
-    socket.emit('join room', {roomId, name})
-
-    socket.on('users media', (usersMedia: UserMedia[]) => {
-      console.log(usersMedia, socket.id)
-      setUsersMedia(usersMedia)
-    })
-
     navigator.mediaDevices.getUserMedia(constraints).then(stream => {
+      socket.emit('join room', {roomId, name})
+
+      socket.on('users media', (usersMedia: UserData[]) => {
+        console.log(usersMedia, socket.id, 'media')
+        setUsersMedia(usersMedia)
+      })
+
+      socket.on('call', (users: string[]) => {
+        connect(stream, users)
+      })
+
       setStream(stream)
       if (youVideo.current) {
         youVideo.current.srcObject = stream
@@ -73,7 +78,7 @@ const Room: React.FC<RoomProps> = (props) => {
       stream.getAudioTracks().forEach(track => {
         track.enabled = !activeMic
       })
-      socket.emit('user media', {id: socket.id, activeMic: !activeMic, activeCamera})
+      socket.emit('user data', {id: socket.id, activeMic: !activeMic, activeCamera})
     }
   }
 
@@ -83,7 +88,7 @@ const Room: React.FC<RoomProps> = (props) => {
       stream.getVideoTracks().forEach(track => {
         track.enabled = !activeCamera
       })
-      socket.emit('user media', {id: socket.id, activeMic, activeCamera: !activeCamera})
+      socket.emit('user data', {id: socket.id, activeMic, activeCamera: !activeCamera})
     }
   }
 
@@ -104,16 +109,14 @@ const Room: React.FC<RoomProps> = (props) => {
   }
 
   function call() {
-    if (stream) {
-      connect(stream)
-    }
+    socket.emit('call')
   }
 
   function hungUp() {
     disconnect()
   }
 
-  function getUserMedia(type: 'mic' | 'camera', userId: string) {
+  function getUserData(type: 'mic' | 'camera', userId: string) {
     const user = usersMedia.find(user => user.id === userId)
 
     if (type === 'mic' && user) {
@@ -136,6 +139,7 @@ const Room: React.FC<RoomProps> = (props) => {
     }
   }
 
+  const isOwner = usersMedia.find(user => user.id === socket.id)?.owner
   return (
     <div className='room'>
       <div className={"video-wrapper " + usersClass()}>
@@ -144,8 +148,8 @@ const Room: React.FC<RoomProps> = (props) => {
         </div>
         {peerItems.map(item => <Video key={item.id} 
           peerItem={item}
-          disabledCamera={!getUserMedia('camera', item.id)}
-          disabledMic={!getUserMedia('mic', item.id)} 
+          disabledCamera={!getUserData('camera', item.id)}
+          disabledMic={!getUserData('mic', item.id)} 
         />)}
       </div>
 
@@ -166,7 +170,7 @@ const Room: React.FC<RoomProps> = (props) => {
             <i className="fas fa-video-slash disable"></i>
           )}
         </div>
-        {(callUsers !== null && callUsers.length > 0 && usersMedia.length > 1) && (
+        {(!isOwner || (peerItems.length > 0)) && (
           <div className={'interface-btn ' + phoneClass} onClick={() => peerItems.length ? hungUp() : call()}>
             <i className="fas fa-phone"></i>
           </div>
