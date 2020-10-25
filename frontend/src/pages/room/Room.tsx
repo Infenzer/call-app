@@ -16,22 +16,21 @@ interface UserData {
   owner: boolean
 }
 
-const url = new URL(document.location.href)
-const name = url.searchParams.get('name')
-const videoCall = url.searchParams.get('video')
+// const url = new URL(document.location.href)
+// const name = url.searchParams.get('name')
+// const videoCall = url.searchParams.get('video')
 
 const constraints: MediaStreamConstraints = {
   audio: true,
-  video: videoCall === 'true' ? true : false
+  video: true
 }
 
 const Room: React.FC<RoomProps> = (props) => {
   const roomId = props.match?.params.id
   const [activeMic, setActiveMic] = useState(true)
-  const [activeCamera, setActiveCamera] = useState(videoCall === 'true' ? true : false)
+  const [activeCamera, setActiveCamera] = useState(constraints.video || false)
   const [usersMedia, setUsersMedia] = useState<UserData[]>([])
   const [stream, setStream] = useState<MediaStream | null>(null)
-  const [initConnect, setInitConnect] = useState(false)
   const [
     peerItems,
     connect,
@@ -43,7 +42,7 @@ const Room: React.FC<RoomProps> = (props) => {
 
   useEffect(() => {
     navigator.mediaDevices.getUserMedia(constraints).then(stream => {
-      socket.emit('join room', {roomId, name})
+      socket.emit('join room', {roomId})
 
       socket.on('users media', (usersMedia: UserData[]) => {
         console.log(usersMedia, socket.id, 'media')
@@ -62,12 +61,11 @@ const Room: React.FC<RoomProps> = (props) => {
       console.log(e)
     })
 
-    console.log(roomId, name)
+    console.log(roomId)
   }, [])
   
   useEffect(() => {
     if (stream && callUsers?.length === 0) {
-      setInitConnect(true)
       connect(stream)
     }
   }, [stream, callUsers])
@@ -153,29 +151,34 @@ const Room: React.FC<RoomProps> = (props) => {
         />)}
       </div>
 
-      <div className="user-interface">
-        <div className="interface-btn mic" onClick={() => toggleMic()}>
-          {activeMic && (
-            <i className="fas fa-microphone"></i>
-          )}
-          {!activeMic && (
-            <i className="fas fa-microphone-slash disable"></i>
-          )}
-        </div>
-        <div className="interface-btn camera" onClick={() => toggleCamera()}>
-          {activeCamera && (
-            <i className="fas fa-video"></i>
-          )}
-          {!activeCamera && (
-            <i className="fas fa-video-slash disable"></i>
-          )}
-        </div>
-        {(!isOwner || (peerItems.length > 0)) && (
-          <div className={'interface-btn ' + phoneClass} onClick={() => peerItems.length ? hungUp() : call()}>
-            <i className="fas fa-phone"></i>
+      {stream && (
+        <div className="user-interface">
+          <div className="interface-btn mic" onClick={() => toggleMic()}>
+            {activeMic && (
+              <i className="fas fa-microphone"></i>
+            )}
+            {!activeMic && (
+              <i className="fas fa-microphone-slash disable"></i>
+            )}
           </div>
-        )}
-      </div>
+          <div className="interface-btn camera" onClick={() => toggleCamera()}>
+            {activeCamera && (
+              <i className="fas fa-video"></i>
+            )}
+            {!activeCamera && (
+              <i className="fas fa-video-slash disable"></i>
+            )}
+          </div>
+          {(!isOwner || (peerItems.length > 0)) && (
+            <div className={'interface-btn ' + phoneClass} onClick={() => peerItems.length ? hungUp() : call()}>
+              <i className="fas fa-phone"></i>
+            </div>
+          )}
+          <div className={'interface-btn pointers'} onClick={() => screenSharing()}>
+            <i className="fas fa-photo-video"></i>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

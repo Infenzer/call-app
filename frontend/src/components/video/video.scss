@@ -1,15 +1,13 @@
 .video {
   position: relative;
-  border: 1px solid black;
-  background-color: black;
   display: flex;
   justify-content: center;
   align-items: center;
-  border: 1px solid black;
   height: 100%;
   justify-self: center;
 
   video {
+    border: 1px solid black;
     height: 100%;
     max-width: 100%;
   }
